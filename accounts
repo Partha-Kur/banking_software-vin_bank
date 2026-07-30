@@ -1,0 +1,29 @@
+
+def load_accounts():
+    """Loads all accounts from the text file into a dictionary without external libraries."""
+    accounts = {}
+    try:
+        with open(FILENAME, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                parts = line.split(";")
+                if len(parts) == 10:
+                    username = parts[0]
+                    accounts[username] = {
+                        "password": parts[1],
+                        "balance": float(parts[2]),
+                        "total_deposits": float(parts[3]),
+                        "total_interest": float(parts[4]),
+                        "loan_balance": float(parts[5]),
+                        "credit_score": int(parts[6]),
+                        "rewards_points": int(parts[7]),
+                        "credit_limit": float(parts[8]),
+                        "credit_used": float(parts[9]),
+                    }
+    except FileNotFoundError:
+        # File doesn't exist yet on first run
+        pass
+    return accounts
