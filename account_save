@@ -1,0 +1,12 @@
+def save_accounts(accounts):
+    """Saves the entire accounts dictionary back to the text file."""
+    with open(FILENAME, "w", encoding="utf-8") as f:
+        for u, data in accounts.items():
+            record = (
+                f"{u};{data['password']};{data['balance']:.2f};"
+                f"{data['total_deposits']:.2f};{data['total_interest']:.2f};"
+                f"{data['loan_balance']:.2f};{data['credit_score']};"
+                f"{data['rewards_points']};{data['credit_limit']:.2f};"
+                f"{data['credit_used']:.2f}\n"
+            )
+            f.write(f"{record}\n")
