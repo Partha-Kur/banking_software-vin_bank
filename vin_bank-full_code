@@ -1,0 +1,402 @@
+FILENAME = "bank_accounts.txt"
+
+
+def load_accounts():
+    """Loads all accounts from the text file into a dictionary without external libraries."""
+    accounts = {}
+    try:
+        with open(FILENAME, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                parts = line.split(";")
+                if len(parts) == 10:
+                    username = parts[0]
+                    accounts[username] = {
+                        "password": parts[1],
+                        "balance": float(parts[2]),
+                        "total_deposits": float(parts[3]),
+                        "total_interest": float(parts[4]),
+                        "loan_balance": float(parts[5]),
+                        "credit_score": int(parts[6]),
+                        "rewards_points": int(parts[7]),
+                        "credit_limit": float(parts[8]),
+                        "credit_used": float(parts[9]),
+                    }
+    except FileNotFoundError:
+        # File doesn't exist yet on first run
+        pass
+    return accounts
+
+
+def save_accounts(accounts):
+    """Saves the entire accounts dictionary back to the text file."""
+    with open(FILENAME, "w", encoding="utf-8") as f:
+        for u, data in accounts.items():
+            record = (
+                f"{u};{data['password']};{data['balance']:.2f};"
+                f"{data['total_deposits']:.2f};{data['total_interest']:.2f};"
+                f"{data['loan_balance']:.2f};{data['credit_score']};"
+                f"{data['rewards_points']};{data['credit_limit']:.2f};"
+                f"{data['credit_used']:.2f}\n"
+            )
+            f.write(f"{record}\n")
+
+
+def p_strength_c(password):
+    has_letter = False
+    has_digit = False
+
+    for ch in password:
+        if ch.isalpha():
+            has_letter = True
+        elif ch.isdigit():
+            has_digit = True
+
+    if len(password) > 8 and has_letter and has_digit:
+        print("Password is valid ✅")
+        return 'safe'
+    else:
+        print("\nPassword is invalid ❌")
+        print("Requirements: > 8 characters, at least 1 letter, at least 1 number\n")
+        return 'weak'
+
+
+def adjust_credit_score(account_data, change, reason):
+    """Utility function to safely adjust credit score between 300 and 850."""
+    old_score = account_data['credit_score']
+    account_data['credit_score'] = max(300, min(850, account_data['credit_score'] + change))
+    diff = account_data['credit_score'] - old_score
+
+    if diff > 0:
+        print(f"📈 Credit Score Improved! +{diff} pts ({reason}) | New Score: {account_data['credit_score']}")
+    elif diff < 0:
+        print(f"📉 Credit Score Dropped! {diff} pts ({reason}) | New Score: {account_data['credit_score']}")
+
+
+def plot_financial_summary(account_data):
+    """Plots a visual text-based ASCII bar chart without using external libraries."""
+    print("\n==============================================")
+    print("      📊 FINANCIAL VISUALIZATION CHART 📊     ")
+    print("==============================================")
+
+    metrics = {
+        "Checking Balance": account_data['balance'],
+        "Total Deposits  ": account_data['total_deposits'],
+        "Interest Earned ": account_data['total_interest'],
+        "Loan Balance    ": account_data['loan_balance']
+    }
+
+    max_val = max(metrics.values()) if max(metrics.values()) > 0 else 1
+    max_bar_len = 30  # Width of bar chart in characters
+
+    print("\n--- Financial Balances ---")
+    for label, val in metrics.items():
+        bar_length = int((val / max_val) * max_bar_len) if max_val > 0 else 0
+        bar = "█" * bar_length
+        print(f"{label} | {bar:<30} ${val:.2f}")
+
+    print("\n--- Credit Score Rating ---")
+    score = account_data['credit_score']
+    score_bar_length = int((score / 850) * max_bar_len)
+    score_bar = "█" * score_bar_length
+    print(f"Credit Score     | {score_bar:<30} {score} / 850")
+    print("----------------------------------------------")
+
+
+def bank_dashboard(username, account_data, bank_accounts):
+    """Main menu loop with embedded loans, credit scores, cards, and plotting."""
+    while True:
+        print(f"\n==========================================")
+        print(f"          WELCOME TO YOUR DASHBOARD, {username.upper()}!")
+        print(f"==========================================")
+        print(f"1. Account Summary & Credit Score")
+        print(f"2. Deposit Money")
+        print(f"3. Withdraw Money")
+        print(f"4. Apply Annual Interest (5%)")
+        print(f"5. Pay Monthly Maintenance Fee ($12)")
+        print(f"6. Credit Card Menu")
+        print(f"7. Take Out a Loan")
+        print(f"8. Pay Off Outstanding Loan")
+        print(f"9. Plot Financial Visual Chart")
+        print(f"10. Exit Dashboard")
+
+        choice = input("\nSelect an option (1-10): ").strip()
+
+        # 1. SUMMARY & CREDIT SCORE
+        if choice == "1":
+            print(f"\n--- 📊 Full Financial Summary ---")
+            print(f"Checking Balance:   ${account_data['balance']:.2f}")
+            print(f"Total Deposited:    ${account_data['total_deposits']:.2f}")
+            print(f"Interest Earned:    ${account_data['total_interest']:.2f}")
+            print(f"Outstanding Loan:   ${account_data['loan_balance']:.2f}")
+            print(f"Credit Score:       {account_data['credit_score']} / 850")
+            print(f"Rewards Points:     {account_data['rewards_points']} pts")
+            print(f"Credit Limit:       ${account_data['credit_limit']:.2f}")
+            print(f"Credit Used:        ${account_data['credit_used']:.2f}")
+
+        # 2. DEPOSIT
+        elif choice == "2":
+            try:
+                amount = float(input("Enter amount to deposit: $"))
+                if amount <= 0:
+                    print("Deposit amount must be greater than zero.")
+                else:
+                    account_data['balance'] += amount
+                    account_data['total_deposits'] += amount
+                    earned_points = int(amount // 10)
+                    account_data['rewards_points'] += earned_points
+                    print(f"Successfully deposited ${amount:.2f}!")
+                    print(f"🎉 You earned {earned_points} rewards points!")
+            except ValueError:
+                print("Invalid input! Please enter a numerical value.")
+
+        # 3. WITHDRAW
+        elif choice == "3":
+            try:
+                amount = float(input("Enter amount to withdraw: $"))
+                if amount <= 0:
+                    print("Withdrawal amount must be greater than zero.")
+                elif amount > account_data['balance']:
+                    print("❌ Insufficient funds in your account!")
+                else:
+                    account_data['balance'] -= amount
+                    print(f"Successfully withdrew ${amount:.2f}!")
+                    print(f"Remaining balance: ${account_data['balance']:.2f}")
+            except ValueError:
+                print("Invalid input! Please enter a numerical value.")
+
+        # 4. ANNUAL INTEREST
+        elif choice == "4":
+            interest_rate = 0.05
+            earned_interest = account_data['balance'] * interest_rate
+            account_data['balance'] += earned_interest
+            account_data['total_interest'] += earned_interest
+            print(f"\n📈 Interest Applied (5% rate)!")
+            print(f"Added ${earned_interest:.2f} to your account.")
+            print(f"New Balance: ${account_data['balance']:.2f}")
+
+        # 5. MAINTENANCE FEE
+        elif choice == "5":
+            fee = 12.00
+            print(f"\n💳 Monthly Account Maintenance Fee: ${fee:.2f}")
+            if account_data['balance'] >= fee:
+                account_data['balance'] -= fee
+                print(f"Fee paid. Remaining Balance: ${account_data['balance']:.2f}")
+                adjust_credit_score(account_data, 5, "On-time account maintenance payment")
+            else:
+                print("❌ Insufficient funds to cover the maintenance fee!")
+                adjust_credit_score(account_data, -15, "Missed account fee payment")
+
+        # 6. CREDIT CARD MENU
+        elif choice == "6":
+            print("\n--- Credit Card Operations ---")
+            print(f"Available Credit: ${account_data['credit_limit'] - account_data['credit_used']:.2f}")
+            print("1. Make a purchase with Credit Card")
+            print("2. Pay off Credit Card balance")
+
+            sub_choice = input("Select an option (1-2): ").strip()
+
+            if sub_choice == "1":
+                try:
+                    spend = float(input("Enter purchase amount: $"))
+                    available_credit = account_data['credit_limit'] - account_data['credit_used']
+                    if spend <= 0:
+                        print("Amount must be positive.")
+                    elif spend > available_credit:
+                        print("❌ Transaction declined: Exceeds credit limit!")
+                    else:
+                        account_data['credit_used'] += spend
+                        cc_points = int(spend * 2)
+                        account_data['rewards_points'] += cc_points
+                        print(f"Transaction approved! ${spend:.2f} charged to Credit Card.")
+                        print(f"🎉 Earned {cc_points} bonus reward points!")
+
+                        if account_data['credit_limit'] > 0 and (account_data['credit_used'] / account_data['credit_limit']) > 0.8:
+                            adjust_credit_score(account_data, -10, "High credit card utilization (>80%)")
+                except ValueError:
+                    print("Invalid input!")
+
+            elif sub_choice == "2":
+                try:
+                    pay = float(input("Enter payment amount: $"))
+                    if pay <= 0:
+                        print("Amount must be positive.")
+                    elif pay > account_data['balance']:
+                        print("❌ Insufficient funds in bank balance to make this payment!")
+                    elif pay > account_data['credit_used']:
+                        print(f"You only owe ${account_data['credit_used']:.2f}.")
+                    else:
+                        account_data['balance'] -= pay
+                        account_data['credit_used'] -= pay
+                        print(f"Paid ${pay:.2f} towards credit card. Remaining owed: ${account_data['credit_used']:.2f}")
+                        adjust_credit_score(account_data, 10, "Credit card payment")
+                except ValueError:
+                    print("Invalid input!")
+
+        # 7. TAKE A LOAN
+        elif choice == "7":
+            print("\n--- 🏛️ Vin Bank Loan Center ---")
+            score = account_data['credit_score']
+
+            if score < 580:
+                print(f"❌ Loan Application Rejected. Credit Score ({score}) is too low. Required: 580+")
+            else:
+                max_loan = (score - 500) * 20
+                print(f"Credit Score: {score}")
+                print(f"You qualify for up to: ${max_loan:.2f}")
+
+                try:
+                    loan_req = float(input("Enter requested loan amount: $"))
+                    if loan_req <= 0:
+                        print("Loan amount must be greater than zero.")
+                    elif loan_req > max_loan:
+                        print(f"❌ Request exceeds maximum approved limit of ${max_loan:.2f}.")
+                    else:
+                        loan_with_interest = loan_req * 1.05
+                        account_data['balance'] += loan_req
+                        account_data['loan_balance'] += loan_with_interest
+                        print(f"🎉 Loan Approved! ${loan_req:.2f} deposited into your checking account.")
+                        print(f"Total loan balance to repay (includes 5% interest): ${account_data['loan_balance']:.2f}")
+                        adjust_credit_score(account_data, -5, "New loan account opened")
+                except ValueError:
+                    print("Invalid input!")
+
+        # 8. PAY OFF LOAN
+        elif choice == "8":
+            print("\n--- 💸 Loan Repayment ---")
+            if account_data['loan_balance'] == 0:
+                print("You currently have no active loans to pay back!")
+            else:
+                print(f"Total Outstanding Loan Balance: ${account_data['loan_balance']:.2f}")
+                print(f"Available Checking Balance:    ${account_data['balance']:.2f}")
+                try:
+                    pay = float(input("Enter loan repayment amount: $"))
+                    if pay <= 0:
+                        print("Amount must be positive.")
+                    elif pay > account_data['balance']:
+                        print("❌ Insufficient funds in checking balance!")
+                    elif pay > account_data['loan_balance']:
+                        print(f"You only owe ${account_data['loan_balance']:.2f}.")
+                    else:
+                        account_data['balance'] -= pay
+                        account_data['loan_balance'] -= pay
+                        print(f"Successfully repaid ${pay:.2f} toward your loan!")
+                        print(f"Remaining loan balance: ${account_data['loan_balance']:.2f}")
+
+                        adjust_credit_score(account_data, 15, "Loan repayment made")
+
+                        if account_data['loan_balance'] == 0:
+                            print("🎉 Congratulations! You have fully paid off your loan!")
+                            adjust_credit_score(account_data, 25, "Loan fully paid off")
+                except ValueError:
+                    print("Invalid input!")
+
+        # 9. VISUAL PLOT / CHART
+        elif choice == "9":
+            plot_financial_summary(account_data)
+
+        # 10. EXIT
+        elif choice == "10":
+            # Save any changes made during the session
+            save_accounts(bank_accounts)
+            print("\n📁 Account info saved to 'bank_accounts.txt'!")
+            print("Thank you for banking with Vin Bank! Goodbye! 👋")
+            break
+        else:
+            print("Invalid choice! Please pick an option from 1 to 10.")
+
+
+def main():
+    # Load existing account database from text file
+    bank_accounts = load_accounts()
+
+    print("Hello, welcome to Vin Bank!")
+
+    while True:
+        s = input("\nAre you new to this bank? (Yes/No): ").strip().capitalize()
+
+        if s == "Yes":
+            while True:
+                u = input("\nEnter your desired username: ").strip()
+                if u in bank_accounts:
+                    print("That username is taken. Please choose another.")
+                else:
+                    break
+
+            while True:
+                p = input("Enter your password (letters + numbers, > 8 characters): ")
+                if p_strength_c(p) == 'safe':
+                    break
+
+            while True:
+                try:
+                    initial_deposit = float(input("Enter your initial deposit amount: $"))
+                    if initial_deposit < 0:
+                        print("Initial deposit cannot be negative. Please enter the valid amount")
+                        continue
+                    break
+                except ValueError:
+                    print("Please enter a valid monetary amount (e.g., 250.00).")
+
+            credit_limit = 1000.00
+            while True:
+                cc_opt = input("Would you like to open a Vin Bank Credit Card with a $1,000 limit? (Yes/No): ").strip().capitalize()
+                if cc_opt == "Yes":
+                    credit_limit = 1000.00
+                    break
+                elif cc_opt == "No":
+                    credit_limit = 0.00
+                    break
+                else:
+                    print("Please enter a valid answer (Yes or No).")
+
+            # Store user data in dictionary
+            bank_accounts[u] = {
+                "password": p,
+                "balance": initial_deposit,
+                "total_deposits": initial_deposit,
+                "total_interest": 0.0,
+                "loan_balance": 0.0,
+                "credit_score": 700,
+                "rewards_points": 50,
+                "credit_limit": credit_limit,
+                "credit_used": 0.0
+            }
+
+            save_accounts(bank_accounts)
+            print("📁 Account info successfully written to 'bank_accounts.txt'!")
+
+            print("\n🎉 You have successfully created your Vin Bank account!")
+            print("📊 Starting Credit Score: 700 / 850")
+            print("🎁 You received a 50-point welcome bonus!")
+
+            bank_dashboard(u, bank_accounts[u], bank_accounts)
+            break
+
+        elif s == "No":
+            u = input("\nEnter your username: ").strip()
+            p = input("Enter your password: ")
+
+            if u in bank_accounts and bank_accounts[u]["password"] == p:
+                print("Login successful!")
+                bank_dashboard(u, bank_accounts[u], bank_accounts)
+                break
+            else:
+                print("❌ Invalid username or password!")
+                retry = input("Try again? (Yes/No): ").strip().capitalize()
+                if retry != "Yes":
+                    print("Thank you for visiting Vin Bank!")
+                    break
+        else:
+            print("Please enter either 'Yes' or 'No'.")
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+
