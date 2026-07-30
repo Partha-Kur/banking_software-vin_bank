@@ -1,0 +1,83 @@
+def main():
+    # Load existing account database from text file
+    bank_accounts = load_accounts()
+
+    print("Hello, welcome to Vin Bank!")
+
+    while True:
+        s = input("\nAre you new to this bank? (Yes/No): ").strip().capitalize()
+
+        if s == "Yes":
+            while True:
+                u = input("\nEnter your desired username: ").strip()
+                if u in bank_accounts:
+                    print("That username is taken. Please choose another.")
+                else:
+                    break
+
+            while True:
+                p = input("Enter your password (letters + numbers, > 8 characters): ")
+                if p_strength_c(p) == 'safe':
+                    break
+
+            while True:
+                try:
+                    initial_deposit = float(input("Enter your initial deposit amount: $"))
+                    if initial_deposit < 0:
+                        print("Initial deposit cannot be negative. Please enter the valid amount")
+                        continue
+                    break
+                except ValueError:
+                    print("Please enter a valid monetary amount (e.g., 250.00).")
+
+            credit_limit = 1000.00
+            while True:
+                cc_opt = input("Would you like to open a Vin Bank Credit Card with a $1,000 limit? (Yes/No): ").strip().capitalize()
+                if cc_opt == "Yes":
+                    credit_limit = 1000.00
+                    break
+                elif cc_opt == "No":
+                    credit_limit = 0.00
+                    break
+                else:
+                    print("Please enter a valid answer (Yes or No).")
+
+            # Store user data in dictionary
+            bank_accounts[u] = {
+                "password": p,
+                "balance": initial_deposit,
+                "total_deposits": initial_deposit,
+                "total_interest": 0.0,
+                "loan_balance": 0.0,
+                "credit_score": 700,
+                "rewards_points": 50,
+                "credit_limit": credit_limit,
+                "credit_used": 0.0
+            }
+
+            save_accounts(bank_accounts)
+            print("📁 Account info successfully written to 'bank_accounts.txt'!")
+
+            print("\n🎉 You have successfully created your Vin Bank account!")
+            print("📊 Starting Credit Score: 700 / 850")
+            print("🎁 You received a 50-point welcome bonus!")
+
+            bank_dashboard(u, bank_accounts[u], bank_accounts)
+            break
+
+        elif s == "No":
+            u = input("\nEnter your username: ").strip()
+            p = input("Enter your password: ")
+
+            if u in bank_accounts and bank_accounts[u]["password"] == p:
+                print("Login successful!")
+                bank_dashboard(u, bank_accounts[u], bank_accounts)
+                break
+            else:
+                print("❌ Invalid username or password!")
+                retry = input("Try again? (Yes/No): ").strip().capitalize()
+                if retry != "Yes":
+                    print("Thank you for visiting Vin Bank!")
+                    break
+        else:
+            print("Please enter either 'Yes' or 'No'.")
