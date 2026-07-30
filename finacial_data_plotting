@@ -1,0 +1,28 @@
+def plot_financial_summary(account_data):
+    """Plots a visual text-based ASCII bar chart without using external libraries."""
+    print("\n==============================================")
+    print("      📊 FINANCIAL VISUALIZATION CHART 📊     ")
+    print("==============================================")
+
+    metrics = {
+        "Checking Balance": account_data['balance'],
+        "Total Deposits  ": account_data['total_deposits'],
+        "Interest Earned ": account_data['total_interest'],
+        "Loan Balance    ": account_data['loan_balance']
+    }
+
+    max_val = max(metrics.values()) if max(metrics.values()) > 0 else 1
+    max_bar_len = 30  # Width of bar chart in characters
+
+    print("\n--- Financial Balances ---")
+    for label, val in metrics.items():
+        bar_length = int((val / max_val) * max_bar_len) if max_val > 0 else 0
+        bar = "█" * bar_length
+        print(f"{label} | {bar:<30} ${val:.2f}")
+
+    print("\n--- Credit Score Rating ---")
+    score = account_data['credit_score']
+    score_bar_length = int((score / 850) * max_bar_len)
+    score_bar = "█" * score_bar_length
+    print(f"Credit Score     | {score_bar:<30} {score} / 850")
+    print("----------------------------------------------")
