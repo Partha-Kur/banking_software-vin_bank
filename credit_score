@@ -1,0 +1,10 @@
+def adjust_credit_score(account_data, change, reason):
+    """Utility function to safely adjust credit score between 300 and 850."""
+    old_score = account_data['credit_score']
+    account_data['credit_score'] = max(300, min(850, account_data['credit_score'] + change))
+    diff = account_data['credit_score'] - old_score
+
+    if diff > 0:
+        print(f"📈 Credit Score Improved! +{diff} pts ({reason}) | New Score: {account_data['credit_score']}")
+    elif diff < 0:
+        print(f"📉 Credit Score Dropped! {diff} pts ({reason}) | New Score: {account_data['credit_score']}")
